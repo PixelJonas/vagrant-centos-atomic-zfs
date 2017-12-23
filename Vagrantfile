@@ -1,5 +1,7 @@
 # -*- mode: ruby -*-
 # vi: set ft=ruby :
+# This Vagrantfile requires the vagrant-reload plugin, please run:
+# vagrant plugin install vagrant-reload
 
 Vagrant.configure("2") do |config|
   config.vm.box = "centos/atomic-host"
@@ -13,7 +15,16 @@ Vagrant.configure("2") do |config|
   end
 
   config.vm.provision "shell", inline: <<-SHELL
-    curl -o /etc/yum.repos.d/zfs.repo https://raw.githubusercontent.com/lvlie/vagrant-centos-atomic-zfs/master/zfs.repo
-    curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux https://raw.githubusercontent.com/lvlie/vagrant-centos-atomic-zfs/master/RPM-GPG-KEY-zfsonlinux
+   if ! rpm -q zfs ; then
+      curl -o /etc/yum.repos.d/zfs.repo https://raw.githubusercontent.com/lvlie/vagrant-centos-atomic-zfs/master/zfs.repo
+      curl -o /etc/pki/rpm-gpg/RPM-GPG-KEY-zfsonlinux https://raw.githubusercontent.com/lvlie/vagrant-centos-atomic-zfs/master/RPM-GPG-KEY-zfsonlinux
+      atomic host install zfs
+    fi
+  SHELL
+
+  config.vm.provision :reload
+
+  config.vm.provision "shell", inline: <<-SHELL
+    find /lib/modules/*/extra/ -name "*.ko" | xargs -n1 insmod
   SHELL
 end
